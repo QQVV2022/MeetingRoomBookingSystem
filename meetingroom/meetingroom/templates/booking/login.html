@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meeting Room - Log In</title>
+</head>
+<body>
+<form action="/login" method="post">
+    {% csrf_token %}
+    User Name：<input type="text" name="username">
+    Password： <input type="password" name="password">
+    <input type="submit">
+    {{ message }}
+</form>
+</body>
+</html>

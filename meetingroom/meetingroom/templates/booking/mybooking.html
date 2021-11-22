@@ -1,0 +1,122 @@
+
+{% extends "booking/base.html" %}
+
+{% block home %} {% endblock %}
+{% block mybook %} active {% endblock %}
+
+{% block content %}
+
+<!-- HTML Form (wrapped in a .bootstrap-iso div) -->
+<div class="bootstrap-iso calendar">
+    <br />
+    <div class="container-fluid col-md-12 col-sm-12 col-xs-12">
+
+                <form  class="form-horizontal" >
+
+                    <div class="form-group ">
+                        {{ msg }}
+                        <div class="col-sm-3">
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <i class="fa fa-calendar">
+                                    </i>
+                                </div>
+                                <input data-date="{{ booking_date_list }}" class="form-control" id="date" name="date" autocomplete="off" placeholder="Choose your booked date" type="text"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% for item in html_to_front %}
+                    <p class="book_date_show" data-date = "{{ item.0 }}">{{ item.0 }}</p>
+                    <div class="timetable">
+                        <table class="table table-bordered table-striped">
+                            <thread>
+                               <tr>
+                                   <th>Start Time</th>
+                                   {% for time in time_ids %}
+                                        <th>{{  time.1 }}</th>
+                                   {% endfor %}
+                               </tr>
+                            </thread>
+
+
+                            <tbody>
+                                {{ item.1|safe }}
+                            </tbody>
+
+                        </table>
+
+                    </div>
+                    <div class="form-group">
+
+                            <div class="col text-center">
+                            <input type="hidden" value="{{ csrf_token }}">
+                            <a class="btn btn-primary book" name="submit" href="/indexlq/?date={{item.0}}">Edit</a>
+                            </div>
+
+                    </div>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+    <script>
+    var date_input=$('input[name="date"]'); //our date input has the name "date"
+
+	$(document).ready(function(){
+		var container=$('.bootstrap-iso .form-horizontal').length>0 ? $('.bootstrap-iso .form-horizontal').parent() : "body";
+		date_input.datepicker({
+			format: 'yyyy-mm-dd',
+			container: container,
+			//todayHighlight: true,
+			startDate: new Date(),
+			endDate:"+17d",
+			autoclose: true,
+
+            beforeShowDay: function (date) {
+              var allDates = date.getFullYear()+'-'+(date.getMonth()+1)+'-'+('0'+date.getDate()).slice(-2);
+                var date_list = $('#date').data('date');
+
+              if (date_list.indexOf(allDates) != -1) {
+                return {
+                  classes: 'date-possible enabled_date',
+                  tooltip: 'The meeting date.'
+                }
+              } else {
+                return false;
+              }
+            }
+		})
+        // update the input date
+		var url = window.location.href
+		var the_date = url.slice(-11,)
+		if(the_date.slice(0,1)=='='){
+            console.log(the_date);
+            $('#date').val(the_date.slice(1,));
+		}
+		else{
+            $('#date').val('');
+		}
+
+
+	})
+
+    $('.bootstrap-iso').on("change", "#date", function(event) {
+        var date_ = $(this).val();
+        location.href="/my_booking/?date="+date_;
+
+    });
+
+
+
+
+
+
+
+</script>
+
+{% endblock %}

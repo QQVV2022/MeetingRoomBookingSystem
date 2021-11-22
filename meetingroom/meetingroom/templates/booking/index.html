@@ -1,0 +1,190 @@
+{% extends "booking/base.html" %}
+
+{% block home %} active {% endblock %}
+{% block mybook %} {% endblock %}
+
+{% block content %}
+
+<div class="bootstrap-iso calendar">
+    <br />
+    <div class="container-fluid col-md-12 col-sm-12 col-xs-12">
+
+                <form  class="form-horizontal" >
+
+                    <div class="form-group ">
+                        {{ msg }}
+                        <div class="col-sm-3">
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <i class="fa fa-calendar">
+                                    </i>
+                                </div>
+                                <input class="form-control" id="date" name="date" autocomplete="off" placeholder="Choose a date: YYYY-MM-DD" type="text"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timetable">
+                        <table class="table table-bordered table-striped">
+                            <thread>
+                               <tr>
+                                   <th>Meeting Starting Time</th>
+                                   {% for time in time_ids %}
+                                        <th>{{  time.1 }}</th>
+                                   {% endfor %}
+                               </tr>
+                            </thread>
+
+
+                        <tbody>
+                            {{ htmls|safe }}
+                        </tbody>
+
+                    </table>
+                    </div>
+                    <div class="form-group">
+
+                            <div class="col text-center">
+                            <input type="hidden" value="{{ csrf_token }}">
+                            <button class="btn btn-primary book" name="submit" >Submit</button>
+                            </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+    var date_input=$('input[name="date"]'); //our date input has the name "date"
+
+	$(document).ready(function(){
+		var container=$('.bootstrap-iso .form-horizontal').length>0 ? $('.bootstrap-iso .form-horizontal').parent() : "body";
+		date_input.datepicker({
+			format: 'yyyy-mm-dd',
+			container: container,
+			todayHighlight: true,
+			startDate: new Date(),
+			endDate:"+6d",  // different to backend
+			autoclose: true,
+		})
+        // update the input date
+		var url = window.location.href
+		var the_date = url.slice(-11,)
+		if(the_date.slice(0,1)=='='){
+            console.log(the_date);
+            $('#date').val(the_date.slice(1,));
+		}
+		else{
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+            var yyyy = today.getFullYear();
+
+            today =  yyyy+'-'+ mm + '-' + dd ;
+            $('#date').val(today);
+		}
+
+	})
+
+	$('.bootstrap-iso').on("change", "#date", function(event) {
+
+        var date_ = $(this).val();
+        location.href="/indexlq/?date="+date_;
+
+    });
+
+    var POST_DATA={
+        'add':{},
+        'del':{}
+    };
+
+    $(".item").click(function(){
+        if ($(this).hasClass("another_active")){
+            alert("It's reserved! Book another one!");
+        }
+        else if ($(this).hasClass("active")){
+            $(this).removeClass("active");
+
+            var room_id = $(this).data("room");
+
+            var time_id = this.id;
+            if(POST_DATA['del'].hasOwnProperty(room_id)){
+                POST_DATA['del'][room_id].append(time_id);
+            }
+            else{
+                POST_DATA['del'][room_id] = [time_id];
+            }
+            console.log("room_id",room_id, POST_DATA);
+        }
+        else if ($(this).hasClass("td_active")){
+            $(this).removeClass("td_active");
+
+            var room_id = $(this).data("room");  // jq
+            console.log("cancel booking","room_id",room_id);
+            var time_id = this.id;  // js
+            POST_DATA['add'][room_id].splice(POST_DATA['add'][room_id].indexOf(time_id),1);
+        }
+        else{
+            $(this).addClass("td_active");
+            var room_id = $(this).data("room");  // jq
+            console.log("room_id",room_id);
+            var time_id = this.id;  // js
+            if(POST_DATA['add'].hasOwnProperty(room_id)){
+                POST_DATA['add'][room_id].push(time_id);
+            }
+            else{
+                POST_DATA['add'][room_id] = [time_id];
+            }
+            console.log("room_id",room_id, POST_DATA);
+        }
+        //console.log(POST_DATA);
+    });
+
+    // for test, not important
+    function wait(ms){
+       var start = new Date().getTime();
+       var end = start;
+       while(end < start + ms) {
+         end = new Date().getTime();
+      }
+    }
+
+    $(".book").click(function () {  // do not forget the space!!
+        const csrftoken = Cookies.get('csrftoken');
+        var date_ = $('#date').val();
+        console.log("start",csrftoken,$.cookie('csrftoken'),date_);
+        //wait(3000); for test
+        $.ajax({
+            url:'/booklq/',
+            type:'post',
+            headers:{"X-CSRFToken":csrftoken},
+            data:{
+                choose_date:date_,
+                post_data:JSON.stringify(POST_DATA)
+            },
+            dataType:"json",
+            success:function (data) {
+                console.log(data);
+                if(data.state === 1){
+                    //success
+
+                    location.href = ''
+                }else{
+                console.log(data.state);
+                    alert('It\'s been booked by others!');
+                    console.log(data.msg)
+                    //location.href=""
+                }
+            }
+
+        })
+    });
+
+
+</script>
+
+{% endblock %}
